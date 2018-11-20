@@ -33,7 +33,7 @@ struct object_t {
 	uint16_t spr_num;
 	union {
 		uint8_t b[2];
-		int16_t w; // offset from &triggers_table[19], objects_table[] index
+		int16_t w;
 		const uint8_t *p;
 	} data[11]; // 0x6..0x1C
 };
@@ -129,7 +129,7 @@ struct vars_t {
 	uint8_t *tilemap_data;
 	uint16_t level_pos_num;
 	uint8_t tilemap_type, tilemap_flags;
-	uint8_t tilemap_lut[0x100]; // type:0,1,2
+	uint8_t tilemap_lut_type[0x100]; // type:0,1,2
 	uint8_t tilemap_lut_init[6 * 0x100];
 	uint8_t tilemap_lut_init2[0x100];
 	const uint8_t *tilemap_current_lut;
@@ -137,7 +137,7 @@ struct vars_t {
 	const uint8_t *level_tiles_lut;
 	uint8_t palette_buffer[256 * 3];
 	bool change_next_level_flag;
-	bool screen_updated_flag;
+	bool palette_update_flag;
 };
 
 extern struct vars_t g_vars;
@@ -193,7 +193,6 @@ extern void	video_draw_string(const char *s, int offset, int hspace);
 extern void	video_copy_vga(int size);
 extern void	video_vsync(int delay);
 extern void	clear_palette();
-extern void	fade_palette_helper();
 extern void	fade_in_palette();
 extern void	fade_out_palette();
 extern void	ja_decode_spr(const uint8_t *src, int w, int h, uint8_t *dst, int dst_pitch, uint8_t pal_mask);

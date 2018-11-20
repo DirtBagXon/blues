@@ -146,9 +146,9 @@ static void fade_palette_helper(int in) {
 	r.x = r.y = 0;
 	SDL_GetRendererOutputSize(_renderer, &r.w, &r.h);
 	for (int i = 1; i <= FADE_STEPS; ++i) {
-		int alpha = 256 * i / FADE_STEPS;
+		int alpha = 255 * i / FADE_STEPS;
 		if (in) {
-			alpha = 256 - alpha;
+			alpha = 255 - alpha;
 		}
 		SDL_SetRenderDrawColor(_renderer, 0, 0, 0, alpha);
 		SDL_RenderClear(_renderer);

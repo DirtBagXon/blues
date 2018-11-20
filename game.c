@@ -21,6 +21,9 @@ void update_input() {
 	g_vars.input_keystate[4] = g_sys.input.digit3;
 }
 
+static void wait_input(int timeout) {
+}
+
 static void do_splash_screen() {
 	clear_palette();
 	load_file("titus.eat");
@@ -30,9 +33,7 @@ static void do_splash_screen() {
 	load_file("tiny.eat");
 	video_copy_vga(0x7D00);
 	fade_in_palette();
-}
-
-static void copy_screen_palette() {
+	fade_out_palette();
 }
 
 static void scroll_screen_palette() {
@@ -139,7 +140,7 @@ void do_difficulty_screen() {
 	clear_palette();
 	video_copy_vga(0x7D00);
 	fade_in_palette();
-	// ...
+	wait_input(560);
 	fade_out_palette();
 }
 
@@ -150,6 +151,7 @@ void do_level_number_screen() {
 	char buf[8];
 	snprintf(buf, sizeof(buf), "%02d", g_vars.level);
 	video_draw_string(buf, 0x5E9B, 11);
+	video_copy_vga(0x7D00);
 	fade_in_palette();
 	fade_out_palette();
 }
@@ -158,7 +160,6 @@ static void display_password_image() {
 	clear_palette();
 	load_file("password.eat");
 	video_copy_vga(0x7D00);
-	copy_screen_palette();
 }
 
 static uint16_t get_password_seed(uint16_t ax) {
@@ -185,14 +186,14 @@ void do_level_password_screen() {
 		str[i] = dx;
 	}
 	str[4] = 0;
-	// ...
+
 	video_draw_string("STAGE NUMBER", 0x7E96, 11);
 	video_draw_string(str, 0xABB4, 20);
 	fade_in_palette();
 	scroll_screen_palette();
-	// ...
+
 	ax = get_password_seed(dx);
-	// ...
+
 	fade_out_palette();
 }
 
@@ -209,7 +210,6 @@ static int do_menu_screen() {
 	clear_palette();
 	video_copy_vga(0x7D00);
 	fade_in_palette();
-	copy_screen_palette();
 	memset(g_vars.input_keystate, 0, sizeof(g_vars.input_keystate));
 	g_vars.level_time = 0;
 	while (!g_sys.input.quit) {
@@ -235,22 +235,21 @@ static int do_menu_screen() {
 static int do_options_screen() {
 	fade_out_palette();
 	load_file("fond.eat");
-	video_copy_vga(0x7D00);
-	copy_screen_palette();
 	video_draw_string("GAME SPEED", 0x3EE9, 11);
 	video_draw_string("1 FAST", 0x647E, 11);
 	video_draw_string("2 NORMAL", 0x89FE, 11);
+	video_copy_vga(0x7D00);
 	fade_in_palette();
 	memset(g_vars.input_keystate, 0, sizeof(g_vars.input_keystate));
 	while (!g_sys.input.quit) {
 		scroll_screen_palette();
 		if (g_vars.input_keystate[2] || g_vars.input_keystate[0x4F]) {
-			// _options |= OPT_GAME_SPEED_FAST;
+
 			fade_out_palette();
 			return 1;
 		}
 		if (g_vars.input_keystate[3] || g_vars.input_keystate[0x50]) {
-			// _options &= ~OPT_GAME_SPEED_FAST;
+
 			fade_out_palette();
 			return 2;
 		}
@@ -263,10 +262,10 @@ static int do_options_screen() {
 void do_game_over_screen() {
 	load_file("fond.eat");
 	clear_palette();
-	video_copy_vga(0x7D00);
 	video_draw_string("GAME OVER", 0x5E2E, 11);
+	video_copy_vga(0x7D00);
 	fade_in_palette();
-	// wait_for_key_action();
+	wait_input(64000);
 	fade_out_palette();
 }
 
@@ -294,8 +293,9 @@ void do_game_win_screen() {
 		for (int i = 0; i < 6; ++i) {
 			video_draw_string(text[i].str, text[i].offset, 11);
 		}
+		video_copy_vga(0x7D00);
 		fade_in_palette();
-		// wait_for_key_action();
+		wait_input(64000);
 		fade_out_palette();
 		video_copy_vga(0x7D00);
 	}
@@ -305,7 +305,6 @@ void game_main() {
 	sound_init();
 	play_music(0);
 	do_splash_screen();
-	fade_out_palette();
 	g_sys.set_screen_palette(common_palette_data, 0, 128);
 	video_load_sprites();
 	render_set_sprites_clipping_rect(0, 0, TILEMAP_SCREEN_W, TILEMAP_SCREEN_H);
@@ -318,7 +317,9 @@ void game_main() {
 		const int ret = do_menu_screen();
 		g_vars.players_table[0].lifes_count = 3;
 		g_vars.players_table[1].lifes_count = 3;
-		if (ret == 1) {
+		if (ret == 0) {
+			break;
+		} else if (ret == 1) {
 			do_select_screen();
 			do_difficulty_screen();
 		} else if (ret == 2) {

@@ -46,7 +46,7 @@ void video_copy_vga(int size) {
 	} else {
 		g_sys.set_screen_palette(g_res.tmp, 0, 256);
 		assert(size == 0x7D00);
-		g_sys.update_screen(g_res.tmp + 768, 1);
+		g_sys.update_screen(g_res.tmp + 768, 0);
 		memcpy(g_res.vga, g_res.tmp + 768, 64000);
 	}
 }
@@ -57,15 +57,12 @@ void video_vsync(int delay) {
 void clear_palette() {
 }
 
-void fade_palette_helper() {
-}
-
 void fade_in_palette() {
-	// g_sys.fade_in_palette();
+	g_sys.fade_in_palette();
 }
 
 void fade_out_palette() {
-	// g_sys.fade_out_palette();
+	g_sys.fade_out_palette();
 }
 
 void ja_decode_spr(const uint8_t *src, int w, int h, uint8_t *dst, int dst_pitch, uint8_t pal_mask) {
