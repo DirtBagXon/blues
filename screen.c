@@ -12,7 +12,7 @@
 
 void video_draw_dot_pattern(int offset) {
 	static const int W = 144;
-	uint8_t *dst = g_res.vga + (GAME_SCREEN_H - PANEL_H) * GAME_SCREEN_W + offset * 4;
+	uint8_t *dst = g_res.vga + (GAME_SCREEN_H - PANEL_H) * GAME_SCREEN_W + offset;
 	for (int y = 0; y < PANEL_H; ++y) {
 		for (int x = 0; x < W; x += 2) {
 			dst[x + (y & 1)] = 0;
@@ -34,7 +34,7 @@ void video_draw_string(const char *s, int offset, int hspace) {
 			} else {
 				code -= 0x16;
 			}
-			ja_decode_chr(g_res.font + code * 200, 200, g_res.tmp + 768 + offset, GAME_SCREEN_W);
+			ja_decode_chr(g_res.font + code * 200, 200, g_res.tmp + 768 + offset, 320);
 		}
 		offset += hspace;
 	}
@@ -46,15 +46,20 @@ void video_copy_vga(int size) {
 	} else {
 		g_sys.set_screen_palette(g_res.tmp, 0, 256);
 		assert(size == 0x7D00);
-		g_sys.update_screen(g_res.tmp + 768, 0);
-		memcpy(g_res.vga, g_res.tmp + 768, 64000);
+		const uint8_t *src = g_res.tmp + 768;
+		if (GAME_SCREEN_W * GAME_SCREEN_H == 64000) {
+			memcpy(g_res.vga, src, 64000);
+		} else {
+			for (int y = 0; y < MIN(200, GAME_SCREEN_H); ++y) {
+				memcpy(g_res.vga + y * GAME_SCREEN_W, src, MIN(320, GAME_SCREEN_W));
+				src += 320;
+			}
+		}
+		g_sys.update_screen(g_res.vga, 0);
 	}
 }
 
 void video_vsync(int delay) {
-}
-
-void clear_palette() {
 }
 
 void fade_in_palette() {

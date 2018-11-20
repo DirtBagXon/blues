@@ -54,6 +54,10 @@ struct object_t {
 
 #define object_blinking_counter(obj) (obj)->data[6].b[1]  // 0x13, shield, jump
 
+// star
+#define object2_spr_count(obj)   (obj)->data[0].b[0]
+#define object2_spr_tick(obj)    (obj)->data[0].b[1]
+
 // vinyl
 #define object22_xvelocity(obj)  (obj)->data[0].w
 #define object22_damage(obj)     (obj)->data[1].w
@@ -119,7 +123,6 @@ struct vars_t {
 	int level_loop_counter;
 	int throw_vinyl_counter;
 	uint8_t level_num;
-	uint8_t level_hotspots_count;
 	uint16_t level_time, level_time2;
 	uint8_t level_time_counter;
 	uint8_t triggers_table[19 + TRIGGERS_COUNT * 16];
@@ -192,7 +195,6 @@ extern void	video_draw_sprite(int num, int x, int y, int flag);
 extern void	video_draw_string(const char *s, int offset, int hspace);
 extern void	video_copy_vga(int size);
 extern void	video_vsync(int delay);
-extern void	clear_palette();
 extern void	fade_in_palette();
 extern void	fade_out_palette();
 extern void	ja_decode_spr(const uint8_t *src, int w, int h, uint8_t *dst, int dst_pitch, uint8_t pal_mask);

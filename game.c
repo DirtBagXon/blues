@@ -25,7 +25,6 @@ static void wait_input(int timeout) {
 }
 
 static void do_splash_screen() {
-	clear_palette();
 	load_file("titus.eat");
 	video_copy_vga(0x7D00);
 	fade_in_palette();
@@ -45,7 +44,7 @@ static void scroll_screen_palette() {
 	for (int i = 0; i < count; i += 3) {
 		g_sys.set_palette_color(225 + i / 3, g_res.tmp + 225 * 3 + g_vars.level_time + i);
 	}
-	g_sys.update_screen(g_res.tmp + 768, 1);
+	g_sys.update_screen(g_res.vga, 1);
 }
 
 static void do_select_screen_scroll_palette(int al, int ah, int step, int count) {
@@ -59,7 +58,7 @@ static void do_select_screen_scroll_palette(int al, int ah, int step, int count)
 			g_vars.palette_buffer[i] = color;
 		}
 		g_sys.set_screen_palette(g_vars.palette_buffer + al * 3, al, ah - al + 1);
-		g_sys.update_screen(g_res.tmp + 768, 1);
+		g_sys.update_screen(g_res.vga, 1);
 	} while (--count != 0);
 }
 
@@ -81,7 +80,6 @@ static void do_select_screen_scroll_palette_pattern4() {
 
 static void do_select_screen() {
 	load_file("select.eat");
-	clear_palette();
 	video_copy_vga(0x7D00);
 	fade_in_palette();
 	do_select_screen_scroll_palette_pattern2();
@@ -137,7 +135,6 @@ void do_difficulty_screen() {
 	char name[16];
 	snprintf(name, sizeof(name), "dif%02d.eat", (g_vars.level >> 3) + 1);
 	load_file(name);
-	clear_palette();
 	video_copy_vga(0x7D00);
 	fade_in_palette();
 	wait_input(560);
@@ -145,7 +142,6 @@ void do_difficulty_screen() {
 }
 
 void do_level_number_screen() {
-	clear_palette();
 	load_file("fond.eat");
 	video_draw_string("LEVEL NUMBER", 0x5E0C, 11);
 	char buf[8];
@@ -156,49 +152,36 @@ void do_level_number_screen() {
 	fade_out_palette();
 }
 
-static void display_password_image() {
-	clear_palette();
-	load_file("password.eat");
-	video_copy_vga(0x7D00);
-}
-
-static uint16_t get_password_seed(uint16_t ax) {
+static uint16_t get_password(uint16_t ax) {
+	// ax = read(0xF000:0xFFFF, 16) // bios
 	ax ^= 0xAA31;
-	// ax *=
-	// rol ax
+	// rol ax, cpu_speed
 	return ax;
 }
 
 void do_level_password_screen() {
-	display_password_image();
-	uint8_t dx = g_vars.level - 1;
-	uint16_t ax = g_vars.player * 50 + dx;
+	load_file("password.eat");
+	uint16_t ax = get_password(g_vars.player * 50 + g_vars.level - 1);
 	char str[5];
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) { // reverse 4 high bits of ax in dx
-			dx = (dx << 1) | ((ax >> (15 - j)) & 1);
-		}
-		dx &= 15;
-		dx += '0';
-		if (dx > '9') {
-			dx += 7;
-		}
-		str[i] = dx;
+	for (int i = 0; i < 4; ++i, ax <<= 4) {
+		static const uint8_t rev_bits[] = {
+			0x0, 0x8, 0x4, 0xC, 0x2, 0xA, 0x6, 0xE, 0x1, 0x9, 0x5, 0xD, 0x3, 0xB, 0x7, 0xF
+		};
+		const uint8_t dx = rev_bits[(ax >> 15) & 15] + '0';
+		str[i] = (dx <= '9') ? dx : (dx + 7);
 	}
 	str[4] = 0;
-
 	video_draw_string("STAGE NUMBER", 0x7E96, 11);
 	video_draw_string(str, 0xABB4, 20);
+	video_copy_vga(0x7D00);
 	fade_in_palette();
 	scroll_screen_palette();
-
-	ax = get_password_seed(dx);
-
+	wait_input(64000);
 	fade_out_palette();
 }
 
 static void do_password_screen() {
-	display_password_image();
+	load_file("password.eat");
 	video_draw_string("ENTER PASSWORD", 0x7E96, 11);
 	fade_in_palette();
 	char str[5] = "0000";
@@ -207,7 +190,6 @@ static void do_password_screen() {
 
 static int do_menu_screen() {
 	load_file("menu.eat");
-	clear_palette();
 	video_copy_vga(0x7D00);
 	fade_in_palette();
 	memset(g_vars.input_keystate, 0, sizeof(g_vars.input_keystate));
@@ -261,7 +243,6 @@ static int do_options_screen() {
 
 void do_game_over_screen() {
 	load_file("fond.eat");
-	clear_palette();
 	video_draw_string("GAME OVER", 0x5E2E, 11);
 	video_copy_vga(0x7D00);
 	fade_in_palette();
@@ -270,12 +251,10 @@ void do_game_over_screen() {
 }
 
 void do_game_win_screen() {
-	clear_palette();
 	load_file("win.eat");
 	video_copy_vga(0x7D00);
 	fade_in_palette();
 	fade_out_palette();
-	clear_palette();
 	load_file("end.eat");
 	video_copy_vga(0x7D00);
 	static const struct {
@@ -336,4 +315,5 @@ void game_main() {
 		}
 		do_level();
 	}
+	sound_fini();
 }

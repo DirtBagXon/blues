@@ -1,4 +1,6 @@
 
+/* uncompress data packed with DIET by T.Matsumoto */
+
 #include "unpack.h"
 #include "util.h"
 
@@ -17,14 +19,13 @@ static uint16_t fread_le16(FILE *fp) {
 }
 
 static int next_bit(struct unpack_eat_t *u) {
-	const int carry = u->bits & 1;
-	u->bits >>= 1;
+	const int bit = (u->bits & (1 << (16 - u->len))) != 0;
 	--u->len;
 	if (u->len == 0) {
 		u->bits = fread_le16(u->fp);
 		u->len = 16;
 	}
-	return carry;
+	return bit;
 }
 
 static int zero_bits(struct unpack_eat_t *u, int count) {
@@ -61,8 +62,9 @@ static int unpack_eat(struct unpack_eat_t *u, uint8_t *output_buffer, int output
 		print_error("Unexpected signature for .eat file");
 		return 0;
 	}
+	const uint16_t crc = READ_LE_UINT16(buffer + 12);
 	const int output_size = (buffer[14] << 14) + READ_LE_UINT16(buffer + 15);
-	print_debug(DBG_UNPACK, "uncompressed size %d", output_size);
+	print_debug(DBG_UNPACK, "uncompressed size %d crc 0x%04x", output_size, crc);
 	if (output_size > output_buffer_size) {
 		print_error("Invalid output buffer size %d, need %d", output_buffer_size, output_size);
 		return 0;
