@@ -22,6 +22,14 @@ void update_input() {
 }
 
 static void wait_input(int timeout) {
+	const uint32_t end = g_sys.get_timestamp() + timeout * 10;
+	while (g_sys.get_timestamp() < end) {
+		g_sys.process_events();
+		if (g_sys.input.quit || g_sys.input.space) {
+			break;
+		}
+		g_sys.sleep(20);
+	}
 }
 
 static void do_splash_screen() {
@@ -47,18 +55,19 @@ static void scroll_screen_palette() {
 	g_sys.update_screen(g_res.vga, 1);
 }
 
-static void do_select_screen_scroll_palette(int al, int ah, int step, int count) {
+static void do_select_screen_scroll_palette(int start, int end, int step, int count) {
 	uint8_t *palette_buffer = g_res.tmp;
 	do {
-		for (int i = al * 3; i < ah * 3; ++i) {
+		for (int i = start * 3; i < end * 3; ++i) {
 			int color = g_vars.palette_buffer[i];
 			if ((step > 0 && color != palette_buffer[i]) || (step < 0 && color != 0)) {
 				color += step;
 			}
 			g_vars.palette_buffer[i] = color;
 		}
-		g_sys.set_screen_palette(g_vars.palette_buffer + al * 3, al, ah - al + 1);
+		g_sys.set_screen_palette(g_vars.palette_buffer + start * 3, start, end - start + 1);
 		g_sys.update_screen(g_res.vga, 1);
+		g_sys.sleep(20);
 	} while (--count != 0);
 }
 
@@ -82,6 +91,7 @@ static void do_select_screen() {
 	load_file("select.eat");
 	video_copy_vga(0x7D00);
 	fade_in_palette();
+	memcpy(g_vars.palette_buffer, g_res.tmp, 256 * 3);
 	do_select_screen_scroll_palette_pattern2();
 	int bl = 2;
 	while (!g_sys.input.quit) {
@@ -121,8 +131,9 @@ static void do_select_screen() {
 			}
 		}
 		if (g_sys.input.space) {
+			assert(bl == 1 || bl == 2);
 			g_sys.input.space = 0;
-			g_vars.player = (bl & 3) - 1;
+			g_vars.player = 1 - ((bl & 3) - 1);
 			fade_out_palette();
 			break;
 		}

@@ -4,7 +4,8 @@
 
 #include "intern.h"
 
-#define CHEATS_NO_HIT   (1 << 0)
+#define CHEATS_OBJECT_NO_HIT (1 << 0)
+#define CHEATS_ONE_HIT_VINYL (1 << 1)
 
 #define GAME_SCREEN_W g_vars.screen_w
 #define GAME_SCREEN_H g_vars.screen_h
@@ -63,6 +64,10 @@ struct object_t {
 #define object22_damage(obj)     (obj)->data[1].w
 #define object22_player_num(obj) (obj)->data[2].w
 
+// crate
+#define object64_counter(obj)    (obj)->data[1].w
+#define object64_yvelocity(obj)  (obj)->data[2].w
+
 // monster
 #define object82_state(obj)      (obj)->data[0].b[0]
 #define object82_type(obj)       (obj)->data[0].b[1]
@@ -97,8 +102,8 @@ struct player_t {
 // offset | count | comment
 //   2      20      animated tiles/vinyls
 //  22      10      vinyls
-//  32      8 * 4
-//  64      8
+//  32      8 * 4   (rotating) platforms
+//  64      8       crates
 //  72      10      bonuses spr_num:190
 //  82      20      monsters
 // 102      10
@@ -111,7 +116,8 @@ struct vars_t {
 	int screen_w, screen_h;
 	int level;
 	int player;
-	bool input_keystate[256];
+	bool input_keystate[128];
+	uint32_t timestamp;
 	uint8_t input_key_left, input_key_right, input_key_down, input_key_up, input_key_space;
 	uint16_t buffer[128 * 3 + 1]; // level objects state 0xFFFF, 0xFF20 or g_vars.objects_table index
 	struct player_t players_table[2];
@@ -140,7 +146,7 @@ struct vars_t {
 	const uint8_t *level_tiles_lut;
 	uint8_t palette_buffer[256 * 3];
 	bool change_next_level_flag;
-	bool palette_update_flag;
+	bool reset_palette_flag;
 };
 
 extern struct vars_t g_vars;

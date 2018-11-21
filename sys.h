@@ -49,7 +49,6 @@ extern struct sys_t g_sys;
 
 #define RENDER_SPR_GAME  0 /* player sprites */
 #define RENDER_SPR_LEVEL 1 /* level sprites */
-#define RENDER_SPR_FG    2 /* foreground tiles */
 
 extern void	render_load_sprites(int spr_type, int count, const struct sys_rect_t *r, const uint8_t *data, int w, int h, int palette_offset);
 extern void	render_unload_sprites(int spr_type);

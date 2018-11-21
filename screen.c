@@ -63,11 +63,15 @@ void video_vsync(int delay) {
 }
 
 void fade_in_palette() {
-	g_sys.fade_in_palette();
+	if (!g_sys.input.quit) {
+		g_sys.fade_in_palette();
+	}
 }
 
 void fade_out_palette() {
-	g_sys.fade_out_palette();
+	if (!g_sys.input.quit) {
+		g_sys.fade_out_palette();
+	}
 }
 
 void ja_decode_spr(const uint8_t *src, int w, int h, uint8_t *dst, int dst_pitch, uint8_t pal_mask) {

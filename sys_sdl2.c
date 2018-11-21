@@ -11,7 +11,7 @@ struct spritesheet_t {
 	SDL_Texture *texture;
 };
 
-static struct spritesheet_t _spritesheets[3];
+static struct spritesheet_t _spritesheets[2];
 
 struct sprite_t {
 	int sheet;
